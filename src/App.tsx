@@ -169,6 +169,8 @@ export default function App() {
   return (
     <main
       className="app"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={
         {
           '--grid-cols': STAGE_COLUMNS,
@@ -181,11 +183,7 @@ export default function App() {
         } as CSSProperties
       }
     >
-      <div
-        className="viewport"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
+      <div className="viewport">
         <div className="stage">
           <div className="tiles">{tiles}</div>
           <div className="player" />

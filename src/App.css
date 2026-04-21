@@ -4,6 +4,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
+  touch-action: none;
   background:
     radial-gradient(circle at top, rgba(88, 120, 96, 0.18), transparent 42%),
     #0f1311;
@@ -15,7 +16,6 @@
   aspect-ratio: 1;
   position: relative;
   overflow: hidden;
-  touch-action: none;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.12)),
     #151b17;
