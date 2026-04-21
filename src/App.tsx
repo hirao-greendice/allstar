@@ -5,7 +5,9 @@ import './App.css'
 const AREA_COLUMNS = 2
 const AREA_ROWS = 3
 const AREA_SIZE = 7
-const VISIBLE_TILES = 10
+const VIEW_MARGIN_TILES = 0.5
+const STAGE_EDGE_TILES = 0.5
+const VISIBLE_TILES = AREA_SIZE + VIEW_MARGIN_TILES * 2
 
 const STAGE_COLUMNS = AREA_COLUMNS * AREA_SIZE
 const STAGE_ROWS = AREA_ROWS * AREA_SIZE
@@ -136,8 +138,8 @@ export default function App() {
   }
 
   const currentArea = getAreaFromPosition(playerPosition)
-  const focusX = currentArea.column * AREA_SIZE + AREA_SIZE / 2
-  const focusY = currentArea.row * AREA_SIZE + AREA_SIZE / 2
+  const focusX = currentArea.column * AREA_SIZE + AREA_SIZE / 2 + STAGE_EDGE_TILES
+  const focusY = currentArea.row * AREA_SIZE + AREA_SIZE / 2 + STAGE_EDGE_TILES
 
   const tiles = Array.from({ length: STAGE_ROWS * STAGE_COLUMNS }, (_, index) => {
     const column = index % STAGE_COLUMNS
@@ -176,6 +178,7 @@ export default function App() {
           '--grid-cols': STAGE_COLUMNS,
           '--grid-rows': STAGE_ROWS,
           '--visible-tiles': VISIBLE_TILES,
+          '--stage-edge': STAGE_EDGE_TILES,
           '--focus-x': focusX,
           '--focus-y': focusY,
           '--player-x': playerPosition.x,
