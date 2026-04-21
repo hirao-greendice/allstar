@@ -1,4 +1,5 @@
 .app {
+  --viewport-size: min(88vmin, 560px);
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -9,12 +10,12 @@
 }
 
 .viewport {
-  --viewport-size: min(88vmin, 560px);
   --tile-size: calc(var(--viewport-size) / var(--visible-tiles));
   width: var(--viewport-size);
   aspect-ratio: 1;
   position: relative;
   overflow: hidden;
+  touch-action: none;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.12)),
     #151b17;
@@ -94,4 +95,11 @@
   box-shadow:
     0 0 0 2px rgba(18, 20, 17, 0.8),
     0 8px 16px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 768px) {
+  .app {
+    place-items: start center;
+    padding-top: max(24px, calc(33dvh - var(--viewport-size) / 2));
+  }
 }

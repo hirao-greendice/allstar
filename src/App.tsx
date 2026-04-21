@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import type { CSSProperties } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties, TouchEvent } from 'react'
 import './App.css'
 
 const AREA_COLUMNS = 2
@@ -12,6 +12,11 @@ const STAGE_ROWS = AREA_ROWS * AREA_SIZE
 const INITIAL_PLAYER = { x: 3, y: 10 }
 
 type Position = {
+  x: number
+  y: number
+}
+
+type SwipePoint = {
   x: number
   y: number
 }
@@ -47,8 +52,25 @@ const moveByKey = (key: string, position: Position): Position => {
   }
 }
 
+const moveByDirection = (
+  direction: 'up' | 'down' | 'left' | 'right',
+  position: Position,
+): Position => {
+  switch (direction) {
+    case 'up':
+      return { x: position.x, y: clamp(position.y - 1, 0, STAGE_ROWS - 1) }
+    case 'down':
+      return { x: position.x, y: clamp(position.y + 1, 0, STAGE_ROWS - 1) }
+    case 'left':
+      return { x: clamp(position.x - 1, 0, STAGE_COLUMNS - 1), y: position.y }
+    case 'right':
+      return { x: clamp(position.x + 1, 0, STAGE_COLUMNS - 1), y: position.y }
+  }
+}
+
 export default function App() {
   const [playerPosition, setPlayerPosition] = useState(INITIAL_PLAYER)
+  const swipeStartRef = useRef<SwipePoint | null>(null)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -68,6 +90,50 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [playerPosition])
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.changedTouches[0]
+
+    swipeStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    }
+  }
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const swipeStart = swipeStartRef.current
+
+    if (!swipeStart) {
+      return
+    }
+
+    const touch = event.changedTouches[0]
+    const deltaX = touch.clientX - swipeStart.x
+    const deltaY = touch.clientY - swipeStart.y
+    const minimumSwipeDistance = 24
+
+    swipeStartRef.current = null
+
+    if (
+      Math.abs(deltaX) < minimumSwipeDistance &&
+      Math.abs(deltaY) < minimumSwipeDistance
+    ) {
+      return
+    }
+
+    const direction =
+      Math.abs(deltaX) > Math.abs(deltaY)
+        ? deltaX > 0
+          ? 'right'
+          : 'left'
+        : deltaY > 0
+          ? 'down'
+          : 'up'
+
+    setPlayerPosition((currentPosition) =>
+      moveByDirection(direction, currentPosition),
+    )
+  }
 
   const currentArea = getAreaFromPosition(playerPosition)
   const focusX = currentArea.column * AREA_SIZE + AREA_SIZE / 2
@@ -115,7 +181,11 @@ export default function App() {
         } as CSSProperties
       }
     >
-      <div className="viewport">
+      <div
+        className="viewport"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="stage">
           <div className="tiles">{tiles}</div>
           <div className="player" />
