@@ -4,23 +4,14 @@ import './App.css'
 
 const AREA_COLUMNS = 2
 const AREA_ROWS = 3
-const AREA_SIZE = 7
-const VIEW_MARGIN_TILES = 0.5
+const AREA_SIZE = 5
 const STAGE_EDGE_TILES = 0.5
-const VISIBLE_TILES = AREA_SIZE + VIEW_MARGIN_TILES * 2
-const DEADZONE_RADIUS = 1.25
 
 const STAGE_COLUMNS = AREA_COLUMNS * AREA_SIZE
 const STAGE_ROWS = AREA_ROWS * AREA_SIZE
-const INITIAL_PLAYER = { x: 3, y: 10 }
 const TOTAL_STAGE_COLUMNS = STAGE_COLUMNS + STAGE_EDGE_TILES * 2
 const TOTAL_STAGE_ROWS = STAGE_ROWS + STAGE_EDGE_TILES * 2
-
-const CAMERA_OPTIONS = [
-  { id: 'area', label: 'エリア', duration: 960 },
-  { id: 'player', label: '中央', duration: 220 },
-  { id: 'deadzone', label: 'デッド', duration: 320 },
-] as const
+const INITIAL_PLAYER = { x: 2, y: 7 }
 
 type Position = {
   x: number
@@ -32,8 +23,6 @@ type SwipePoint = {
   y: number
 }
 
-type CameraMode = (typeof CAMERA_OPTIONS)[number]['id']
-
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
 
@@ -41,31 +30,6 @@ const getAreaFromPosition = (position: Position) => ({
   column: Math.floor(position.x / AREA_SIZE),
   row: Math.floor(position.y / AREA_SIZE),
 })
-
-const clampCameraFocus = (focus: Position) => ({
-  x: clamp(focus.x, VISIBLE_TILES / 2, TOTAL_STAGE_COLUMNS - VISIBLE_TILES / 2),
-  y: clamp(focus.y, VISIBLE_TILES / 2, TOTAL_STAGE_ROWS - VISIBLE_TILES / 2),
-})
-
-const getPlayerFocus = (position: Position) =>
-  clampCameraFocus({
-    x: position.x + 0.5 + STAGE_EDGE_TILES,
-    y: position.y + 0.5 + STAGE_EDGE_TILES,
-  })
-
-const getAreaFocus = (position: Position) => {
-  const area = getAreaFromPosition(position)
-
-  return clampCameraFocus({
-    x: area.column * AREA_SIZE + AREA_SIZE / 2 + STAGE_EDGE_TILES,
-    y: area.row * AREA_SIZE + AREA_SIZE / 2 + STAGE_EDGE_TILES,
-  })
-}
-
-const isMovementKey = (key: string) =>
-  ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'].includes(
-    key,
-  )
 
 const moveByKey = (key: string, position: Position): Position => {
   switch (key) {
@@ -106,12 +70,24 @@ const moveByDirection = (
   }
 }
 
+const isMovementKey = (key: string) =>
+  [
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'w',
+    'W',
+    'a',
+    'A',
+    's',
+    'S',
+    'd',
+    'D',
+  ].includes(key)
+
 export default function App() {
   const [playerPosition, setPlayerPosition] = useState(INITIAL_PLAYER)
-  const [cameraMode, setCameraMode] = useState<CameraMode>('area')
-  const [deadzoneFocus, setDeadzoneFocus] = useState(() =>
-    getPlayerFocus(INITIAL_PLAYER),
-  )
   const swipeStartRef = useRef<SwipePoint | null>(null)
 
   useEffect(() => {
@@ -172,51 +148,7 @@ export default function App() {
     )
   }
 
-  useEffect(() => {
-    if (cameraMode !== 'deadzone') {
-      return
-    }
-
-    const playerFocus = getPlayerFocus(playerPosition)
-
-    setDeadzoneFocus((currentFocus) => {
-      const nextFocus = { ...currentFocus }
-
-      if (playerFocus.x < currentFocus.x - DEADZONE_RADIUS) {
-        nextFocus.x = playerFocus.x + DEADZONE_RADIUS
-      } else if (playerFocus.x > currentFocus.x + DEADZONE_RADIUS) {
-        nextFocus.x = playerFocus.x - DEADZONE_RADIUS
-      }
-
-      if (playerFocus.y < currentFocus.y - DEADZONE_RADIUS) {
-        nextFocus.y = playerFocus.y + DEADZONE_RADIUS
-      } else if (playerFocus.y > currentFocus.y + DEADZONE_RADIUS) {
-        nextFocus.y = playerFocus.y - DEADZONE_RADIUS
-      }
-
-      const clampedFocus = clampCameraFocus(nextFocus)
-
-      if (
-        clampedFocus.x === currentFocus.x &&
-        clampedFocus.y === currentFocus.y
-      ) {
-        return currentFocus
-      }
-
-      return clampedFocus
-    })
-  }, [cameraMode, playerPosition])
-
   const currentArea = getAreaFromPosition(playerPosition)
-  const playerFocus = getPlayerFocus(playerPosition)
-  const areaFocus = getAreaFocus(playerPosition)
-  const cameraFocus =
-    cameraMode === 'player'
-      ? playerFocus
-      : cameraMode === 'deadzone'
-        ? deadzoneFocus
-        : areaFocus
-  const currentCamera = CAMERA_OPTIONS.find((option) => option.id === cameraMode)!
 
   const tiles = Array.from({ length: STAGE_ROWS * STAGE_COLUMNS }, (_, index) => {
     const column = index % STAGE_COLUMNS
@@ -254,13 +186,11 @@ export default function App() {
         {
           '--grid-cols': STAGE_COLUMNS,
           '--grid-rows': STAGE_ROWS,
-          '--visible-tiles': VISIBLE_TILES,
+          '--total-cols': TOTAL_STAGE_COLUMNS,
+          '--total-rows': TOTAL_STAGE_ROWS,
           '--stage-edge': STAGE_EDGE_TILES,
-          '--focus-x': cameraFocus.x,
-          '--focus-y': cameraFocus.y,
           '--player-x': playerPosition.x,
           '--player-y': playerPosition.y,
-          '--camera-duration': `${currentCamera.duration}ms`,
         } as CSSProperties
       }
     >
@@ -270,26 +200,6 @@ export default function App() {
             <div className="tiles">{tiles}</div>
             <div className="player" />
           </div>
-          {cameraMode === 'deadzone' ? <div className="deadzone" /> : null}
-        </div>
-
-        <div className="camera-picker">
-          {CAMERA_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              className={option.id === cameraMode ? 'camera-chip is-active' : 'camera-chip'}
-              onClick={() => {
-                if (option.id === 'deadzone') {
-                  setDeadzoneFocus(getPlayerFocus(playerPosition))
-                }
-
-                setCameraMode(option.id)
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
         </div>
       </div>
     </main>
