@@ -8,8 +8,18 @@ body,
 
 body {
   min-height: 100vh;
+  font-family:
+    'Yu Gothic UI',
+    'Hiragino Sans',
+    'Meiryo',
+    sans-serif;
 }
 
 * {
   box-sizing: border-box;
+}
+
+button,
+textarea {
+  font: inherit;
 }
